@@ -1,122 +1,130 @@
 import java.util.Scanner;
 
 class MyList<E> {
-    private Object[] elements;
-    private int size = 0;
-    private static final int DEFAULT_CAPACITY = 10;
+    private Object[] data;
+    private int elementsCount;
+    private int bufferSize;
 
     public MyList() {
-        this.elements = new Object[DEFAULT_CAPACITY];
+        this.bufferSize = 10;
+        this.data = new Object[bufferSize];
+        this.elementsCount = 0;
     }
 
+    // 1. Додавання елементів в кінець
     public void add(E element) {
-        ensureCapacity();
-        elements[size++] = element;
+        if (elementsCount == bufferSize) {
+            resize();
+        }
+        data[elementsCount] = element;
+        elementsCount++;
     }
 
+    // 2. Додавання елементів за індексом
     public void add(int index, E element) {
-        if (index < 0 || index > size) {
-            throw new IndexOutOfBoundsException("Індекс: " + index + ", Розмір: " + size);
+        if (index < 0 || index > elementsCount) {
+            throw new IndexOutOfBoundsException("Некоректний індекс для додавання: " + index);
         }
-        ensureCapacity();
-        System.arraycopy(elements, index, elements, index + 1, size - index);
-        elements[index] = element;
-        size++;
+        if (elementsCount == bufferSize) {
+            resize();
+        }
+        for (int i = elementsCount; i > index; i--) {
+            data[i] = data[i - 1];
+        }
+        data[index] = element;
+        elementsCount++;
     }
 
     public E remove(int index) {
-        checkIndex(index);
-        E oldValue = (E) elements[index];
-        int numMoved = size - index - 1;
-        if (numMoved > 0) {
-            System.arraycopy(elements, index + 1, elements, index, numMoved);
+        if (index < 0 || index >= elementsCount) {
+            throw new IndexOutOfBoundsException("Індекс видалення поза межами: " + index);
         }
-        elements[--size] = null;
-        return oldValue;
+        E removedElement = (E) data[index];
+        for (int i = index; i < elementsCount - 1; i++) {
+            data[i] = data[i + 1];
+        }
+        data[elementsCount - 1] = null;
+        elementsCount--;
+        return removedElement;
     }
 
     public E get(int index) {
-        checkIndex(index);
-        return (E) elements[index];
+        if (index < 0 || index >= elementsCount) {
+            throw new IndexOutOfBoundsException("Індекс доступу поза межами: " + index);
+        }
+        return (E) data[index];
     }
 
     public int size() {
-        return size;
+        return elementsCount;
     }
 
-    public int capacity() {
-        return elements.length;
+    public int getBufferSize() {
+        return bufferSize;
     }
 
-    private void ensureCapacity() {
-        if (size == elements.length) {
-            int newSize = elements.length * 2;
-            Object[] newElements = new Object[newSize];
-            System.arraycopy(elements, 0, newElements, 0, size);
-            elements = newElements;
+    private void resize() {
+        bufferSize = bufferSize * 2;
+        Object[] newData = new Object[bufferSize];
+        for (int i = 0; i < elementsCount; i++) {
+            newData[i] = data[i];
         }
-    }
-
-    private void checkIndex(int index) {
-        if (index < 0 || index >= size) {
-            throw new IndexOutOfBoundsException("Індекс: " + index + ", Розмір: " + size);
-        }
+        data = newData;
     }
 }
 
 public class Main {
     public static void main(String[] args) {
         MyList<String> list = new MyList<>();
-        Scanner sc = new Scanner(System.in);
+        Scanner scanner = new Scanner(System.in);
 
         while (true) {
-            System.out.println("\n--- Меню керування переліком ---");
             System.out.println("1. Додати в кінець");
             System.out.println("2. Додати за індексом");
             System.out.println("3. Видалити за індексом");
             System.out.println("4. Отримати за індексом");
-            System.out.println("5. Статус (розмір та буфер)");
+            System.out.println("5. Кількість елементів та розмір буфера");
             System.out.println("0. Вихід");
-            System.out.print("Виберіть дію: ");
+            System.out.print("Оберіть опцію: ");
 
-            String cmd = sc.nextLine();
+            String choice = scanner.nextLine();
 
             try {
-                switch (cmd) {
+                switch (choice) {
                     case "1" -> {
-                        System.out.print("Введіть значення: ");
-                        list.add(sc.nextLine());
-                        System.out.println("Додано.");
+                        System.out.print("Введіть дані: ");
+                        list.add(scanner.nextLine());
+                        System.out.println("Елемент додано успішно.");
                     }
                     case "2" -> {
                         System.out.print("Введіть індекс: ");
-                        int i = Integer.parseInt(sc.nextLine());
-                        System.out.print("Введіть значення: ");
-                        list.add(i, sc.nextLine());
-                        System.out.println("Вставлено.");
+                        int idx = Integer.parseInt(scanner.nextLine());
+                        System.out.print("Введіть дані: ");
+                        list.add(idx, scanner.nextLine());
+                        System.out.println("Елемент вставлено.");
                     }
                     case "3" -> {
-                        System.out.print("Введіть індекс для видалення: ");
-                        int i = Integer.parseInt(sc.nextLine());
-                        System.out.println("Видалено елемент: " + list.remove(i));
+                        System.out.print("Індекс для видалення: ");
+                        int idx = Integer.parseInt(scanner.nextLine());
+                        System.out.println("Видалено: " + list.remove(idx));
                     }
                     case "4" -> {
-                        System.out.print("Введіть індекс для пошуку: ");
-                        int i = Integer.parseInt(sc.nextLine());
-                        System.out.println("Результат: " + list.get(i));
+                        System.out.print("Введіть індекс: ");
+                        int idx = Integer.parseInt(scanner.nextLine());
+                        System.out.println("Результат: " + list.get(idx));
                     }
                     case "5" -> {
-                        System.out.println("Кількість елементів: " + list.size());
-                        System.out.println("Місткість буфера (масиву): " + list.capacity());
+                        System.out.println("Присутньо елементів: " + list.size());
+                        System.out.println("Місткість буфера: " + list.getBufferSize());
                     }
                     case "0" -> {
-                        System.out.println("Вихід з програми...");
-                        System.exit(0);
+                        System.out.println("Програму завершено.");
+                        return;
                     }
-                    default -> System.out.println("Помилка: невідома команда.");
+                    default -> System.out.println("Невірний пункт меню!");
                 }
             } catch (Exception e) {
-                System.out.println("Виникла помилка: " + e.getMessage());
+                System.out.println("Помилка: " + e.getMessage());
             }
         }
     }
